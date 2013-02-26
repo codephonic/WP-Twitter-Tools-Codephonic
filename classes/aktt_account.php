@@ -121,15 +121,82 @@ class AKTT_Account {
 		}
 		return apply_filters('aktt_account_option', $val, $key);
 	}
-	
-	
+	       
+
+	function twitter_request($account, $api, array $args = array(), $method = 'GET') {
+		if (!is_object($account)) {
+			$account = $this->account($account);
+		}
+		if ($account !== false) {
+  $config['key'] = get_option('tdf_consumer_key');
+  $config['secret'] = get_option('tdf_consumer_secret');
+  $config['token'] = get_option('tdf_access_token');
+  $config['token_secret'] = get_option('tdf_access_token_secret');
+  $config['screenname'] = get_option('tdf_user_timeline');
+  $config['cache_expire'] = intval(get_option('tdf_cache_expire'));
+  if ($config['cache_expire'] < 1) $config['cache_expire'] = 3600;
+  $config['directory'] = plugin_dir_path(__FILE__);
+
+  $obj = new StormTwitter($config);
+  $res = $obj->searchTweets(20, $args['q'], array('include_entities' => 1, 'trim_user' => 0));
+
+  print_r($res[0]);
+  $body = array();
+  $body['result'] = 'success';
+  $body['response'] = $res;
+
+  $request = array();
+  $request['body'] = json_encode($body);
+  
+
+			if (!is_wp_error($request)) {
+				$request['body'] = apply_filters('social_response_body', $request['body'], 'twitter');
+				if (is_string($request['body'])) {
+					// slashes are normalized (always added) by WordPress
+					$request['body'] = json_decode(stripslashes_deep($request['body']));
+				}
+				return Social_Response::factory($this, $request, $account);
+			}
+			else {
+				Social::log('Service::request() error: '.$request->get_error_message());
+			}
+		}
+		return false;
+	}
+
+
+
+	function search_for_tweets($search_term) {
+print_r('<br />----------------=================Results - Search===========-----------------<br />');
+		$response = $this->twitter_request($this->social_acct, 'search/tweets', array(
+                        'q' => $search_term,
+			'count' => apply_filters('aktt_account_api_download_count', 20), // default to twitter's default 
+			'include_entities' => 1 // include explicit hashtags and mentions
+		));
+
+//print_r($response);
+
+		if ($response !== false) {
+			$content = $response->body();
+			if ($content->result == 'success') {
+				return $content->response;
+			}
+		}
+		return false;
+	}
+
+
 	function download_tweets() {
+print_r('<br />----------------=================Results - User===========-----------------<br />');
 		// Use Social to download tweets for this account
 		$response = $this->service->request($this->social_acct, 'statuses/user_timeline', array(
 			'count' => apply_filters('aktt_account_api_download_count', 20), // default to twitter's default 
 			'include_entities' => 1, // include explicit hashtags and mentions
 			'include_rts' => 1, // include retweets
 		));
+
+//print_r($response);
+
 		if ($response !== false) {
 			$content = $response->body();
 			if ($content->result == 'success') {
@@ -160,6 +227,7 @@ class AKTT_Account {
 			WHERE guid IN ('".implode("','", $tweet_guids)."')
 			AND post_type = '".AKTT::$post_type."'
 		");
+  print_r("Check 1 <br />");
 		
 		// Set the args for any blog posts created
 		$post_tweet_args = array(
@@ -169,6 +237,7 @@ class AKTT_Account {
 			'title_prefix' => $this->option('blog_post_title'),
 		);
 		
+  print_r("Check 2 <br />");
 // Save new tweets
 		foreach ($tweets as $tweet) {
 			if (in_array(AKTT_Tweet::guid_from_twid($tweet->id), $existing_guids)) {
@@ -176,13 +245,24 @@ class AKTT_Account {
 			}
 
 			// Start up a tweet object
+    print_r("Check 2.1 <br />");
 			$t = new AKTT_Tweet($tweet);
+    print_r("Check 2.2 <br />");
 
 			if (!($result = $t->add())) {
 				AKTT::log('There was an error saving a tweet. Tweet ID: '.$t->id);
 				continue;
 			}
-
+    print_r("Check 2.3 <br />");
+  print_r($result);
+  print_r('<br />');
+  print_r($t->is_reply() == 1);
+  print_r('<br />');
+  print_r($t->is_retweet() == 1);
+  print_r('<br />');
+  print_r($t->tweet_post_exists() == 1);
+  print_r('<br />');
+  print_r($t->was_broadcast() == 1);
 // Now conditionially create the associated blog post
 			if (
 				// If we are set to create blog posts
@@ -201,8 +281,12 @@ class AKTT_Account {
 				&& !$t->was_broadcast()
 				){
 				AKTT::log('Creating a blog post for tweet ID: '.$t->id);
+  print_r("Check 3 <br />");
+  print_r($post_tweet_args);
 				$t->create_blog_post($post_tweet_args);
+  print_r("Check 4 <br />");
 			}
+  print_r("Check 5 <br />");
 		}
 	}
 	

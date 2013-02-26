@@ -870,6 +870,9 @@ class AKTT {
 					self::get_social_accounts();
 					if (isset(self::$accounts[$acct_id])) {
 						if ($tweets = self::$accounts[$acct_id]->download_tweets()) {
+//							self::$accounts[$acct_id]->save_tweets($tweets);
+						}
+						if ($tweets = self::$accounts[$acct_id]->search_for_tweets('#omg')) {
 							self::$accounts[$acct_id]->save_tweets($tweets);
 						}
 					}
