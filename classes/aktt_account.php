@@ -237,7 +237,6 @@ print_r('<br />----------------=================Results - User===========-------
 			'title_prefix' => $this->option('blog_post_title'),
 		);
 		
-  print_r("Check 2 <br />");
 // Save new tweets
 		foreach ($tweets as $tweet) {
 			if (in_array(AKTT_Tweet::guid_from_twid($tweet->id), $existing_guids)) {

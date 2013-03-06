@@ -65,7 +65,19 @@ class AKTT_Tweet {
 	public function id() {
 		return (isset($this->data) ? $this->data->id_str : null);
 	}
+
+	public function screen_name() {
+		return (isset($this->data) && (isset($this->data->user)) ? $this->data->user->screen_name : null);
+	}
 	
+	public function user_name() {
+		return (isset($this->data) && (isset($this->data->user)) ? $this->data->user->name : null);
+	}
+
+	public function profile_image() {
+		return (isset($this->data) && (isset($this->data->user)) ? $this->data->user->profile_image_url : null);
+	}
+
 	/**
 	 * Accessor function for tweet text shortened for post title
 	 *
@@ -494,6 +506,9 @@ class AKTT_Tweet {
 		}
 		
 		update_post_meta($this->post_id, '_aktt_tweet_id', $this->id());
+		update_post_meta($this->post_id, '_aktt_tweet_screen_name', $this->screen_name());
+		update_post_meta($this->post_id, '_aktt_tweet_user_name', $this->user_name());
+		update_post_meta($this->post_id, '_aktt_tweet_profile_image', $this->profile_image());
 		update_post_meta($this->post_id, '_aktt_tweet_raw_data', addslashes($this->raw_data));
 		
 		// Allow things to hook in here
@@ -591,6 +606,9 @@ class AKTT_Tweet {
 		}
 
 		update_post_meta($this->blog_post_id, '_aktt_tweet_id', $this->id()); // twitter's tweet ID
+		update_post_meta($this->blog_post_id, '_aktt_tweet_screen_name', $this->screen_name());
+		update_post_meta($this->blog_post_id, '_aktt_tweet_user_name', $this->user_name());
+		update_post_meta($this->blog_post_id, '_aktt_tweet_profile_image', $this->profile_image());
 		update_post_meta($this->blog_post_id, '_aktt_tweet_post_id', $this->post_id); // twitter's post ID
 		
 		// Add it to the tweet's post_meta as well

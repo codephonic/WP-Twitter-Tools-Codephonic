@@ -872,7 +872,7 @@ class AKTT {
 						if ($tweets = self::$accounts[$acct_id]->download_tweets()) {
 //							self::$accounts[$acct_id]->save_tweets($tweets);
 						}
-						if ($tweets = self::$accounts[$acct_id]->search_for_tweets('#omg')) {
+						if ($tweets = self::$accounts[$acct_id]->search_for_tweets('@HomeMattersUSA')) {
 							self::$accounts[$acct_id]->save_tweets($tweets);
 						}
 					}
